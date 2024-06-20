@@ -70,9 +70,9 @@ def main():
     if args.go:
         eml_file = args.go
         if os.path.exists(eml_file) and eml_file.endswith('.eml'):
-            file_path = '/home/gianpaolo_p/.bin/Liste/nomi_italiani.txt'
+            file_path = '~/.bin/Liste/nomi_italiani.txt'
             nomi = read_values_from_file(file_path)
-            file_path = '/home/gianpaolo_p/.bin/Liste/cognomi.txt'
+            file_path = '~/.bin/Liste/cognomi.txt'
             cognomi = read_values_from_file(file_path)
             html_content = eml_to_html(eml_file)
             modified_html = anonymizer(html_content)
