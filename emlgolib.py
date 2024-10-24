@@ -4,6 +4,20 @@ from email.parser import BytesParser
 from bs4 import BeautifulSoup
 import re
 
+def read_values_from_file(file_path):
+    expanded_path = os.path.expanduser(file_path)
+    #print(f"Expanded Path: {expanded_path}")  # Debugging
+
+    # Use expanded_path instead of file_path
+    values = []
+    with open(expanded_path, 'r') as file:
+        for line in file:
+            values.append(line.strip())
+    return values
+
+nomi = read_values_from_file('~/.bin/Liste/nomi_clean.txt')
+cognomi = read_values_from_file('~/.bin/Liste/cognomi_clean.txt')
+
 def eml_to_html(eml_file):
     with open(eml_file, 'rb') as file:
         msg = BytesParser(policy=policy.default).parse(file)
@@ -23,27 +37,12 @@ def eml_to_html(eml_file):
         else:
             return "<html><body>No content found</body></html>"
 
-"""def add_href_to_anchor_tags(html_content, new_href): # no support conditional
+def add_href_to_anchor_tags(html_content, new_href): # no support conditional
     soup = BeautifulSoup(html_content, 'html.parser')
     anchor_tags = soup.find_all('a')
     for tag in anchor_tags:
         tag['href'] = new_href
-    return str(soup)"""
-
-def add_href_to_anchor_tags(html_content, new_href):
-    # Define a regular expression pattern to match anchor tags
-    anchor_pattern = r'<a\s+(?:(?!-->).)*?>'
-    # Define a regular expression pattern to match the href attribute within anchor tags
-    href_pattern = r'href="([^"]*)"'
-
-    def replace_href(match):
-        href_attr = match.group(1)
-        # Replace href attribute with the new href
-        return f'href="{new_href}"'
-
-    # Use re.sub to find anchor tags and modify their href attributes
-    modified_html = re.sub(anchor_pattern, lambda match: re.sub(href_pattern, replace_href, match.group(0)), html_content)
-    return modified_html
+    return str(soup)
 
 def add_href_to_file(file_path, new_href):
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -56,12 +55,12 @@ def add_href_to_file(file_path, new_href):
 def anonymizer(html_content,nomi,cognomi): # Still have to think (maybe list of all name possible?) Performance problem???
     email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
     modified_html = re.sub(email_pattern, '{{.Email}}', html_content)
-    for nome in nomi:
+    """for nome in nomi:
         if nome in modified_html:
             modified_html = modified_html.replace(nome,'{{.FirstName}}')
     for cognome in cognomi:
         if cognome in modified_html:
-            modified_html = modified_html.replace(cognome,'{{.LastName}}')
+            modified_html = modified_html.replace(cognome,'{{.LastName}}')"""
     
     return modified_html
 
