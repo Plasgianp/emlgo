@@ -1,26 +1,10 @@
 #!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
 
-import emlgolib
+from emlgolib import *
 import os
 import argparse
 import argcomplete
-
-
-def read_values_from_file(file_path):
-    expanded_path = os.path.expanduser(file_path)
-    print(f"Expanded Path: {expanded_path}")  # Debugging
-
-    # Use expanded_path instead of file_path
-    values = []
-    with open(expanded_path, 'r') as file:
-        for line in file:
-            values.append(line.strip())
-    return values
-
-nomi = read_values_from_file('~/.bin/Liste/nomi_clean.txt')
-cognomi = read_values_from_file('~/.bin/Liste/cognomi_clean.txt')
-
 
 def main():
     parser = argparse.ArgumentParser(description='Process .eml files to HTML and/or modify href in HTML files.')
@@ -35,7 +19,6 @@ def main():
     parser.add_argument('--goes', '-all', action='store_true', help='Does --go recursively')
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-
 
     if not any(vars(args).values()):
         parser.print_help()
@@ -59,7 +42,12 @@ def main():
         if args.directory:
             directory_path = args.directory
             new_href = "{{.URL}}" # we can add the website "you've been phished"
-            add_href_to_directory(directory_path, new_href)
+            for root, dirs, files in os.walk(directory_path):
+                for file in files:
+                    if file.endswith('.html') or file.endswith('.htm'):
+                        html_file = os.path.join(root, file)
+                        add_href_to_file(html_file, new_href)
+                        
         else:
             print("Please specify a directory with -d or --directory flag.")
 
@@ -76,7 +64,7 @@ def main():
     if args.html_file:
         html_file = args.html_file
         if os.path.exists(html_file) and (html_file.endswith('.html') or html_file.endswith('.htm')):
-            add_href_to_file(html_file, "www.google.com")
+            add_href_to_file(html_file, '{{.URL}}')
         else:
             print("Invalid HTML file specified.")
     if args.go:
@@ -110,7 +98,6 @@ def main():
         else:
             print("Please specify a directory with -d or --directory flag or an HTML file with --html_file flag.")
         return
-
 
 if __name__ == "__main__":
     main()
