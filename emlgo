@@ -58,7 +58,7 @@ def add_href_to_file(file_path, new_href):
     with open(file_path, 'w', encoding='utf-8') as file:
         file.write(modified_html)
 
-def anonymizer(html_content,nomi,cognomi): # Still have to think (maybe list of all name possible?) Performance problem???
+def anonymizer(html_content): # Still have to think (maybe list of all name possible?) Performance problem???
     email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
     modified_html = re.sub(email_pattern, '{{.Email}}', html_content)
     # Need to find a way to not break everything lol
@@ -135,6 +135,25 @@ def main():
         parser.print_help()
         return
 
+    if args.modify_email:
+        if args.directory:
+            directory = args.directory
+            for root, dirs, files in os.walk(directory):
+                for file in files:
+                    if file.endswith('.html'):
+                        html_file = os.path.join(root, file)
+                        html_content = anonymizer(html_file)
+                        with open(html_file, 'w') as f:
+                            f.write(html_content)
+        else:
+            try:
+                file = args.modify_email
+                html_content = anonymizer(file)
+                with open(file, 'w') as f:
+                            f.write(html_content)
+            except Exception as e:
+                print('Error: {}'.format(e))
+
     if args.emls_to_htmls:
         if args.directory:
             directory = args.directory
@@ -178,6 +197,7 @@ def main():
             add_href_to_file(html_file, '{{.URL}}')
         else:
             print("Invalid HTML file specified.")
+    
     if args.go:
         eml_file = args.go
         if os.path.exists(eml_file) and eml_file.endswith('.eml'):
