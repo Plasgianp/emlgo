@@ -1,4 +1,4 @@
-# EML to HTML Converter and HTML Modifier
+# EMLGO
 
 This Python script processes `.eml` files, converting them to HTML format, and provides several options to modify HTML files in specified ways. It includes functionality to add or modify hyperlinks, anonymize email addresses, and remove script tags from HTML files.
 
