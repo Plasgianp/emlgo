@@ -1,25 +1,11 @@
 #!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
 
-import emlgolib
+from emlgolib import *
+from goapi import *
 import os
 import argparse
 import argcomplete
-
-
-def read_values_from_file(file_path):
-    expanded_path = os.path.expanduser(file_path)
-    print(f"Expanded Path: {expanded_path}")  # Debugging
-
-    # Use expanded_path instead of file_path
-    values = []
-    with open(expanded_path, 'r') as file:
-        for line in file:
-            values.append(line.strip())
-    return values
-
-nomi = read_values_from_file('~/.bin/Liste/nomi_clean.txt')
-cognomi = read_values_from_file('~/.bin/Liste/cognomi_clean.txt')
 
 
 def main():
@@ -32,15 +18,28 @@ def main():
     parser.add_argument('--eml_file', '-e', type=str, help='Convert a single .eml file to HTML')
     parser.add_argument('--html_file', '-f', type=str, help='Add {{.URL}} href in a single HTML file')
     parser.add_argument('--go', '-a', type=str, help='Combine --eml_file, --html_file, and --modify_email')
-    parser.add_argument('--goes', '-all', action='store_true', help='Does --go recursively')
+    parser.add_argument('--goes', '-all', help='Does --go recursively in a dir')
+    parser.add_argument('--get-campaign-summary', '-gcs', action='store_true', help='Get Summary of a campaign')
+    parser.add_argument('--get-campaigns-summaries', action='store_true', help='Get Summary of all campaigns')
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-
 
     if not any(vars(args).values()):
         parser.print_help()
         return
-
+    #----------------------------------------
+    # Gophish api
+    if args.get_campaign_summary is not None:
+        manager.get_campaign_summary(args.get_campaign_summary)
+    else:
+        print("Please specify id of the campaign")
+    
+    if args.get_campaigns_summaries:
+        manager.get_campaigns_summaries()
+    else:
+        print("Something went wrong")
+    #----------------------------------------
+    #Eml and Template Manager
     if args.emls_to_htmls:
         if args.directory:
             directory = args.directory
@@ -59,7 +58,12 @@ def main():
         if args.directory:
             directory_path = args.directory
             new_href = "{{.URL}}" # we can add the website "you've been phished"
-            add_href_to_directory(directory_path, new_href)
+            for root, dirs, files in os.walk(directory_path):
+                for file in files:
+                    if file.endswith('.html') or file.endswith('.htm'):
+                        html_file = os.path.join(root, file)
+                        add_href_to_file(html_file, new_href)
+                        
         else:
             print("Please specify a directory with -d or --directory flag.")
 
@@ -76,7 +80,7 @@ def main():
     if args.html_file:
         html_file = args.html_file
         if os.path.exists(html_file) and (html_file.endswith('.html') or html_file.endswith('.htm')):
-            add_href_to_file(html_file, "www.google.com")
+            add_href_to_file(html_file, '{{.URL}}')
         else:
             print("Invalid HTML file specified.")
     if args.go:
@@ -92,11 +96,11 @@ def main():
             print("Invalid .eml file specified.")
         return
     if args.goes:
-        if args.directory:
-            gophishing_everything(args.directory)
-        else:
-            print("Please specify a directory with -d or --directory flag.")
-        return
+        gophishing_everything(args.goes)
+    else:
+        print("Please specify a directory!")
+    return
+
     if args.script_removal:
         if args.directory:
             directory_path = args.directory
@@ -110,7 +114,6 @@ def main():
         else:
             print("Please specify a directory with -d or --directory flag or an HTML file with --html_file flag.")
         return
-
 
 if __name__ == "__main__":
     main()

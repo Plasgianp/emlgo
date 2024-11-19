@@ -4,6 +4,19 @@ from email.parser import BytesParser
 from bs4 import BeautifulSoup
 import re
 
+#COSTANTI
+FirstName = '{{.FirstName}}'
+LastName = '{{.LastName}}'
+Email = '{{.Email}}'
+
+def read_values_from_file(file_path):
+    expanded_path = os.path.expanduser(file_path)
+    values = []
+    with open(expanded_path, 'r') as file:
+        for line in file:
+            values.append(line.strip())
+    return values
+
 def eml_to_html(eml_file):
     with open(eml_file, 'rb') as file:
         msg = BytesParser(policy=policy.default).parse(file)
@@ -55,13 +68,13 @@ def add_href_to_file(file_path, new_href):
 
 def anonymizer(html_content,nomi,cognomi): # Still have to think (maybe list of all name possible?) Performance problem???
     email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-    modified_html = re.sub(email_pattern, '{{.Email}}', html_content)
+    modified_html = re.sub(email_pattern, Email, html_content)
     for nome in nomi:
         if nome in modified_html:
-            modified_html = modified_html.replace(nome,'{{.FirstName}}')
+            modified_html = modified_html.replace(nome,FirstName)
     for cognome in cognomi:
         if cognome in modified_html:
-            modified_html = modified_html.replace(cognome,'{{.LastName}}')
+            modified_html = modified_html.replace(cognome,LastName)
     
     return modified_html
 
