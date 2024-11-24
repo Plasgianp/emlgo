@@ -14,10 +14,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-url = os.getenv('url')
-api_key = os.getenv('api_key')
+
 
 def main():
+    url = os.getenv('url')
+    api_key = os.getenv('api_key')
     parser = argparse.ArgumentParser(description='Process .eml files to HTML and/or modify href in HTML files.')
     parser.add_argument('--emls_to_htmls', '-r', action='store_true', help='Convert .eml files to HTML')
     parser.add_argument('--modify_href', '-u', action='store_true', help='Add {{.URL}} href in HTML files')
@@ -25,12 +26,15 @@ def main():
     parser.add_argument('--modify_email', action='store_true', help='Modify email addresses in HTML files')
     parser.add_argument('--directory', '-d', type=str, help='Directory containing .eml or HTML files')
     parser.add_argument('--eml_file', '-e', type=str, help='Convert a single .eml file to HTML')
-    parser.add_argument('--html_file', '-f', type=str, help='Add {{.URL}} href in a single HTML file')
-    parser.add_argument('--go', '-a', type=str, help='Combine --eml_file, --html_file, and --modify_email')
+    parser.add_argument('--html-file', '-f', type=str, help='Add {{.URL}} href in a single HTML file')
+    parser.add_argument('--go', '-a', type=str, help='Combine --eml_file, --html-file, and --modify_email')
     parser.add_argument('--goes', '-all', help='Does --go recursively in a dir')
-    parser.add_argument('--get-campaign-summary', '-gcs', action='store_true', help='Get Summary of a campaign')
+    parser.add_argument('--get-campaign-summary', '-gcs',type=int, help='Get Summary of a campaign')
     parser.add_argument('--get-campaigns-summaries', action='store_true', help='Get Summary of all campaigns')
-    parser.add_argument('--post-group', "-pg", action='store_true', help='Create New Group')
+    parser.add_argument('--post-group', "-pg",type=str, help='Create New Group')
+    parser.add_argument('--post-template', "-pt",type=str, help='Create New Template. If a directory is given it will upload \
+        ALL html file on the server(-d not needed)')
+    
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
@@ -39,27 +43,40 @@ def main():
         return
     #----------------------------------------
     # Gophish api
+    manager = CampaignManager(url, api_key)
 
-    if args.post-group.endswith(".csv"):
-        manager = CampaignManager(url,api_key)
-        print("Trying to bulk csv on Gophish Server")
-        manager.create_group(str(args.post-group[:-3]),args.post-group)
-    else:
-        print("Please specify .csv file formatted with 4 columns named\nFirst Name, Last Name, Email, Position")
+    if args.post_template:
+        # Check if it's a directory or a file and call the appropriate function
+        if os.path.isdir(args.post_template):
+            # It's a directory, so create multiple templates from the files in that directory
+            manager.delete_all_templates()
+            print(f"Creating templates from files in directory: {args.post_template}")
+            manager.create_template(args.post_template, directory=True)
+        else:
+            # It's a file, so create a template from that single HTML file
+            print(f"Creating template from file: {args.post_template}")
+            manager.create_template(args.post_template)
 
-    if args.get_campaign_summary is not None:
-        manager.get_campaign_summary(args.get_campaign_summary)
-    else:
-        print("Please specify id of the campaign")
+    if args.post_group:
+        if args.post_group.endswith(".csv"):
+            manager.create_group(str(args.post_group[:-4]), args.post_group)
+        else:
+            print("Please specify a .csv file formatted with 4 columns named\nFirst Name, Last Name, Email, Position")
+
+    if args.get_campaign_summary:
+        try:
+            manager.get_campaign_summary(args.get_campaign_summary)
+        except Exception as e:
+            print("Please specify id of the campaign")
 
     if args.get_campaigns_summaries:
-        manager.get_campaigns_summaries()
-    else:
-        print("Something went wrong")
+        try:
+            manager.get_campaigns_summaries()
+        except Exception as e:
+            print("Something went wrong. Control your '.env'.")
 
     #----------------------------------------
-    #Eml and Template Manager
-
+    # Eml and Template Manager
     if args.emls_to_htmls:
         if args.directory:
             directory = args.directory
@@ -103,7 +120,7 @@ def main():
             add_href_to_file(html_file, '{{.URL}}')
         else:
             print("Invalid HTML file specified.")
-    
+
     if args.go:
         eml_file = args.go
         if os.path.exists(eml_file) and eml_file.endswith('.eml'):
@@ -117,10 +134,11 @@ def main():
             print("Invalid .eml file specified.")
         return
     if args.goes:
-        gophishing_everything(args.goes)
-    else:
-        print("Please specify a directory!")
-    return
+        try:
+            gophishing_everything(args.goes)
+        except Exception as e:
+            print("Please specify a directory!")
+            return
 
     if args.script_removal:
         if args.directory:
