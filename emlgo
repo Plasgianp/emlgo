@@ -10,7 +10,12 @@ from email.parser import BytesParser
 from bs4 import BeautifulSoup
 import argparse
 import argcomplete
+from dotenv import load_dotenv
 
+load_dotenv()
+
+url = os.getenv('url')
+api_key = os.getenv('api_key')
 
 def main():
     parser = argparse.ArgumentParser(description='Process .eml files to HTML and/or modify href in HTML files.')
@@ -25,6 +30,7 @@ def main():
     parser.add_argument('--goes', '-all', help='Does --go recursively in a dir')
     parser.add_argument('--get-campaign-summary', '-gcs', action='store_true', help='Get Summary of a campaign')
     parser.add_argument('--get-campaigns-summaries', action='store_true', help='Get Summary of all campaigns')
+    parser.add_argument('--post-group', "-pg", action='store_true', help='Create New Group')
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
@@ -33,17 +39,27 @@ def main():
         return
     #----------------------------------------
     # Gophish api
+
+    if args.post-group.endswith(".csv"):
+        manager = CampaignManager(url,api_key)
+        print("Trying to bulk csv on Gophish Server")
+        manager.create_group(str(args.post-group[:-3]),args.post-group)
+    else:
+        print("Please specify .csv file formatted with 4 columns named\nFirst Name, Last Name, Email, Position")
+
     if args.get_campaign_summary is not None:
         manager.get_campaign_summary(args.get_campaign_summary)
     else:
         print("Please specify id of the campaign")
-    
+
     if args.get_campaigns_summaries:
         manager.get_campaigns_summaries()
     else:
         print("Something went wrong")
+
     #----------------------------------------
     #Eml and Template Manager
+
     if args.emls_to_htmls:
         if args.directory:
             directory = args.directory
@@ -61,7 +77,7 @@ def main():
     if args.modify_href:
         if args.directory:
             directory_path = args.directory
-            new_href = "{{.URL}}" # we can add the website "you've been phished"
+            new_href = "{{.URL}}" # you can add the website "you've been phished"
             for root, dirs, files in os.walk(directory_path):
                 for file in files:
                     if file.endswith('.html') or file.endswith('.htm'):

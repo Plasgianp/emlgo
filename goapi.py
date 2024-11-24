@@ -1,18 +1,11 @@
 import os
 import glob
-from dotenv import load_dotenv
-
-load_dotenv()
-
-url = os.getenv('url')
-api_key = os.getenv('api_key')
-
 from gophish import Gophish
 from gophish.models import Campaign, Group, SMTP, Template
 
 
 class CampaignManager:
-    def __init__(self, api_key: str, api_url: str):
+    def __init__(self, api_url: str, api_key: str):
         self.client = Gophish(api_key, host=url, verify=False)
     
     def check_existence(client, resource_type, name):
@@ -64,7 +57,7 @@ class CampaignManager:
             print(f"Error fetching campaigns summaries: {e}")
             return None
 
-    def create_group(client, group_name, targets):
+    def create_group(self, group_name, targets):
         """
         Create a new group on the Gophish server.
 
@@ -73,14 +66,10 @@ class CampaignManager:
         :param targets: A list of target dictionaries (e.g., {"email": "...", "first_name": "...", "last_name": "..."}).
         :return: The created group object.
         """
-        try:
-            new_group = Group(name=group_name, targets=targets)
-            return client.groups.post(new_group)
-        except Exception as e:
-            print(f"Error creating group: {e}")
-            return None
+        new_group = Group(name=group_name, targets=targets)
+        return self.client.groups.post(new_group)
 
-    
+
     def group_csv(file_path):
         import csv
         """
