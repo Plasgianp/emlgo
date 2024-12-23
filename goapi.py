@@ -161,6 +161,7 @@ class CampaignManager:
         return self.url
     def _get_api(self):
         return self.api_key
+        
     def create_template(self, html_source, directory=False):
         import json
         """

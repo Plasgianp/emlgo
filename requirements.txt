@@ -1,3 +1,4 @@
 argparse
 argcomplete
 beautifulsoup4
+gophish
