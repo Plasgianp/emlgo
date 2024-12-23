@@ -1,4 +1,3 @@
 argparse
 argcomplete
-bytesparse
 beautifulsoup4
